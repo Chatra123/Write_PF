@@ -12,18 +12,21 @@ CWriteMain::CWriteMain(void)
 	this->teeFile = INVALID_HANDLE_VALUE;
 	this->teeThread = NULL;
 
+  //-----  Write_PF  -----
+  //tee–³Œø‰»
+
 	WCHAR dllPath[MAX_PATH];
 	DWORD ret = GetModuleFileName(g_instance, dllPath, MAX_PATH);
 	if( ret && ret < MAX_PATH ){
 		wstring iniPath = wstring(dllPath) + L".ini";
 		this->writeBuffSize = GetPrivateProfileInt(L"SET", L"Size", 770048, iniPath.c_str());
 		this->writeBuff.reserve(this->writeBuffSize);
-		this->teeCmd = GetPrivateProfileToString(L"SET", L"TeeCmd", L"", iniPath.c_str());
-		if( this->teeCmd.empty() == false ){
-			this->teeBuff.resize(GetPrivateProfileInt(L"SET", L"TeeSize", 770048, iniPath.c_str()));
-			this->teeBuff.resize(max(this->teeBuff.size(), 1));
-			this->teeDelay = GetPrivateProfileInt(L"SET", L"TeeDelay", 0, iniPath.c_str());
-		}
+		//this->teeCmd = GetPrivateProfileToString(L"SET", L"TeeCmd", L"", iniPath.c_str());
+		//if( this->teeCmd.empty() == false ){
+		//	this->teeBuff.resize(GetPrivateProfileInt(L"SET", L"TeeSize", 770048, iniPath.c_str()));
+		//	this->teeBuff.resize(max(this->teeBuff.size(), 1));
+		//	this->teeDelay = GetPrivateProfileInt(L"SET", L"TeeDelay", 0, iniPath.c_str());
+		//}
 	}
 	InitializeCriticalSection(&this->wroteLock);
 }
