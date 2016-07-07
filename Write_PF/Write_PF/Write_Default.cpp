@@ -14,7 +14,7 @@ CInstanceManager<CWriteMain> g_instMng;
 
 extern HINSTANCE g_instance;
 
-#define PLUGIN_NAME L"デフォルト 188バイトTS出力 PlugIn"
+#define PLUGIN_NAME L"Write_PF 188バイトTS出力 PlugIn"
 
 
 //PlugInの名前を取得する

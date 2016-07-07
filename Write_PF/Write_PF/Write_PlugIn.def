@@ -1,4 +1,4 @@
-LIBRARY	"Write_Default"
+LIBRARY	"Write_PF"
 
 EXPORTS
 	GetPlugInName		@1
