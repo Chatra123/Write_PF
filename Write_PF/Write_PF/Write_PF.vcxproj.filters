@@ -19,6 +19,18 @@
     <Filter Include="ヘッダー ファイル\Common">
       <UniqueIdentifier>{02d89fec-3b30-4041-95d1-b404b2bd701f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\PF">
+      <UniqueIdentifier>{1ceedc23-705b-4f05-a3f3-9547d47d61a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\PF\FileReader">
+      <UniqueIdentifier>{cbc65230-84ac-4976-9d44-778c6ba56688}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\PF\Pipe">
+      <UniqueIdentifier>{2501b694-de9d-4198-812e-05e6676cdde1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\PF">
+      <UniqueIdentifier>{14c39871-7cf5-4cfa-8fca-0ad325599c5b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -51,6 +63,30 @@
     <ClInclude Include="SettingDlg.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="PF\PF_Util.h">
+      <Filter>ヘッダー ファイル\PF</Filter>
+    </ClInclude>
+    <ClInclude Include="PF\PipeServer.h">
+      <Filter>ヘッダー ファイル\PF</Filter>
+    </ClInclude>
+    <ClInclude Include="PF\Pipe\AnonPipe.h">
+      <Filter>ヘッダー ファイル\PF\Pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="PF\Pipe\NamedPipe.h">
+      <Filter>ヘッダー ファイル\PF\Pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="PF\FileReader\FileReader.h">
+      <Filter>ヘッダー ファイル\PF\FileReader</Filter>
+    </ClInclude>
+    <ClInclude Include="PF\FileReader\FileReader_Log.h">
+      <Filter>ヘッダー ファイル\PF\FileReader</Filter>
+    </ClInclude>
+    <ClInclude Include="PF\FileReader\StreamBuff.h">
+      <Filter>ヘッダー ファイル\PF\FileReader</Filter>
+    </ClInclude>
+    <ClInclude Include="PF\Pipe\PipeWriter.h">
+      <Filter>ヘッダー ファイル\PF\Pipe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -73,6 +109,9 @@
     </ClCompile>
     <ClCompile Include="SettingDlg.cpp">
       <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="PF\PipeServer.cpp">
+      <Filter>ソース ファイル\PF</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

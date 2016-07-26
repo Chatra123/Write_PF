@@ -162,6 +162,14 @@
   <ItemGroup>
     <ClInclude Include="..\..\Common\StringUtil.h" />
     <ClInclude Include="..\..\Common\Util.h" />
+    <ClInclude Include="PF\FileReader\FileReader.h" />
+    <ClInclude Include="PF\FileReader\FileReader_Log.h" />
+    <ClInclude Include="PF\FileReader\StreamBuff.h" />
+    <ClInclude Include="PF\PF_Util.h" />
+    <ClInclude Include="PF\PipeServer.h" />
+    <ClInclude Include="PF\Pipe\AnonPipe.h" />
+    <ClInclude Include="PF\Pipe\NamedPipe.h" />
+    <ClInclude Include="PF\Pipe\PipeWriter.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SettingDlg.h" />
     <ClInclude Include="stdafx.h" />
@@ -186,6 +194,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="PF\PipeServer.cpp" />
     <ClCompile Include="SettingDlg.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
