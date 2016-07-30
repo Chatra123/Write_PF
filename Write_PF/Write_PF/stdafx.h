@@ -15,3 +15,20 @@
 
 // TODO: プログラムに必要な追加ヘッダーをここで参照してください。
 #include "../../Common/Common.h"
+
+
+//------  Write_PF  ------
+#include <iostream>                //  wstring    cout << "hello" << endl;
+#include <fstream>                 //  wofstream  Log
+#include <thread>
+#include <deque>
+#include <memory>                   // shared_ptr
+#include <mutex>                    // lock
+#include <regex>
+#include <rpc.h>                    // UUID
+#pragma comment(lib ,"rpcrt4.lib")  // UUID
+
+using namespace std;
+
+
+

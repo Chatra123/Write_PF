@@ -2,9 +2,17 @@
 
 #include "../../Common/Util.h"
 #include "../../Common/StringUtil.h"
+//-----  Write_PF  -----
+#include "PF/PF_Util.h"
+#include "PF/PipeServer.h" 
 
 class CWriteMain
 {
+//-----  Write_PF  -----
+protected:
+  unique_ptr<PipeServer> server;
+
+
 public:
 	CWriteMain(void);
 	~CWriteMain(void);

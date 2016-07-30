@@ -93,6 +93,33 @@ BOOL CWriteMain::Start(
 		}
 	}
 
+  //-----  Write_PF  -----
+  {
+    //EpgDataCap_Bon.exeのフォルダパスをカレントに変更
+    //  VisualStudioだとプロジェクトフォルダが
+    //  カレントになっているので exeフォルダに変更
+#ifdef _DEBUG
+    PF_Util::SetCurrent_AppFolder();
+#endif
+
+    //ini
+    wstring iniPath;
+    {
+      WCHAR dllpath[_MAX_PATH];
+      GetModuleFileName(g_instance, dllpath, _MAX_PATH);
+      iniPath = wstring(dllpath) + L".ini";
+    }
+    //write ini
+    PF_ini::Create(iniPath);
+
+
+    //server
+    this->server = make_unique<PipeServer>();
+    this->server->Initialize(this->savePath, iniPath);
+
+  } //-----  Write_PF  -----
+
+
 	return TRUE;
 }
 
@@ -105,6 +132,10 @@ BOOL CWriteMain::Stop(
 			if( WriteFile(this->file, &this->writeBuff.front(), (DWORD)this->writeBuff.size(), &write, NULL) == FALSE ){
 				_OutputDebugString(L"★WriteFile Err:0x%08X\r\n", GetLastError());
 			}else{
+        //-----  Write_PF  -----
+        //Buffの残りを転送
+        this->server->AppendData(this->writeBuff, write);     //書き込んだ部分をパイプ転送
+
 				this->writeBuff.erase(this->writeBuff.begin(), this->writeBuff.begin() + write);
 				CBlockLock lock(&this->wroteLock);
 				this->wrotePos += write;
@@ -127,6 +158,11 @@ BOOL CWriteMain::Stop(
 		CloseHandle(this->teeFile);
 		this->teeFile = INVALID_HANDLE_VALUE;
 	}
+
+  //-----  Write_PF  -----
+  if (this->server != nullptr)
+    this->server->Stop();                   //サーバー送信停止
+
 
 	return TRUE;
 }
@@ -155,12 +191,20 @@ BOOL CWriteMain::Write(
 				//バッファが埋まったので出力
 				DWORD write;
 				if( WriteFile(this->file, &this->writeBuff.front(), (DWORD)this->writeBuff.size(), &write, NULL) == FALSE ){
+          //-----  Write_PF  -----
+          this->server->Stop();                   //サーバー送信停止
+
+
 					_OutputDebugString(L"★WriteFile Err:0x%08X\r\n", GetLastError());
 					SetEndOfFile(this->file);
 					CloseHandle(this->file);
 					this->file = INVALID_HANDLE_VALUE;
 					return FALSE;
 				}
+        //-----  Write_PF  -----
+        this->server->AppendData(this->writeBuff, write);     //書き込めた部分をパイプ転送
+
+
 				this->writeBuff.erase(this->writeBuff.begin(), this->writeBuff.begin() + write);
 				CBlockLock lock(&this->wroteLock);
 				this->wrotePos += write;
@@ -173,12 +217,20 @@ BOOL CWriteMain::Write(
 			//バッファサイズより大きいのでそのまま出力
 			DWORD write;
 			if( WriteFile(this->file, data, size, &write, NULL) == FALSE ){
+        //-----  Write_PF  -----
+        this->server->Stop();                   //サーバー送信停止
+
+
 				_OutputDebugString(L"★WriteFile Err:0x%08X\r\n", GetLastError());
 				SetEndOfFile(this->file);
 				CloseHandle(this->file);
 				this->file = INVALID_HANDLE_VALUE;
 				return FALSE;
 			}
+      //-----  Write_PF  -----
+      this->server->AppendData(this->writeBuff, write);     //書き込めた部分をパイプ転送
+
+
 			*writeSize += write;
 			CBlockLock lock(&this->wroteLock);
 			this->wrotePos += write;
