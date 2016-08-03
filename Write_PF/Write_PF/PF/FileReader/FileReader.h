@@ -114,7 +114,7 @@ public:
   {
     if (!ifile) return;
 
-    __int64 readable_fpos;
+    __int64 readable_fpos;  //ファイル読込可能な最大位置
 
     //Stream Buff
     {//lock scope
@@ -164,24 +164,25 @@ private:
     if (ifile.fail() || ifile.eof())
       return;
 
+    const UINT ReadMax = 770048;
     /*
-      ファイルから ReadMax byte 読込むたびに100msのSleepをいれ
+      ファイルから ReadMax [byte] 読込むたびに100msのSleepをいれ
       ているので最大速度は制限される。
       ReadMaxが小さすぎるのはダメ。録画速度以下だとバッファに
       追いつけなくなる。
-        (770048 / 1) byte * 10 times/sec  =  7.7 MB/sec
-        (770048 / 2) byte * 10 times/sec  =  3.9 MB/sec
+        ( 770,048 / 1 ) [byte/times]  *  10 [times/sec]  =  7.7 [MB/sec]
+        ( 770,048 / 2 ) [byte/times]  *  10 [times/sec]  =  3.9 [MB/sec]
     */
-    const int ReadMax = 770048;
 
-    //req_sizeはStreamBuffの手前まで。
-    //ＴＳ書込が完了なら readable_fpos < 0
     __int64 req_size;
     {
-      req_size = ReadMax;
+      //req_sizeはStreamBuffの手前まで。
+      //ＴＳ書込が完了なら readable_fpos < 0
       if (0 <= readable_fpos
-        && readable_fpos < req_fpos + req_size)
+        && readable_fpos < req_fpos + ReadMax)
         req_size = readable_fpos - req_fpos + 1;
+      else
+        req_size = ReadMax;
     }
     if (req_size <= 0)
       return;
@@ -204,7 +205,6 @@ private:
 public:
   void Seek_Read_fpos(const DWORD size)
   {
-    //パイプに書き込めた分だけ進める。
     fpos_read += size;
 
     __int64 fpos_read_before = fpos_read - size;

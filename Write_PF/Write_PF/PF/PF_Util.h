@@ -15,7 +15,7 @@ public:
     // folder path
     wchar_t root[_MAX_PATH], dir[_MAX_PATH];
     _wsplitpath_s(appPath, root, _MAX_PATH, dir, _MAX_PATH, NULL, 0, NULL, 0);
-    wstring appDir = (wstring)root + (wstring)dir;
+    wstring appDir = wstring(root) + wstring(dir);
     SetCurrentDirectory(appDir.c_str());
   }
 
