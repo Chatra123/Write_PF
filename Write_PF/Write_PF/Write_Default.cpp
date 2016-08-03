@@ -58,24 +58,28 @@ void WINAPI Setting(
 	HWND parentWnd
 	)
 {
-	WCHAR dllPath[MAX_PATH];
-	DWORD ret = GetModuleFileName(g_instance, dllPath, MAX_PATH);
-	if( ret && ret < MAX_PATH ){
-		wstring iniPath = wstring(dllPath) + L".ini";
-		wstring size = GetPrivateProfileToString(L"SET", L"Size", L"770048", iniPath.c_str());
-		wstring teeCmd = GetPrivateProfileToString(L"SET", L"TeeCmd", L"", iniPath.c_str());
-		wstring teeSize = GetPrivateProfileToString(L"SET", L"TeeSize", L"770048", iniPath.c_str());
-		wstring teeDelay = GetPrivateProfileToString(L"SET", L"TeeDelay", L"0", iniPath.c_str());
-		CSettingDlg dlg;
-		if( dlg.CreateSettingDialog(g_instance, parentWnd, size, teeCmd, teeSize, teeDelay) == IDOK ){
-			WritePrivateProfileString(L"SET", L"Size", size.c_str(), iniPath.c_str());
-			WritePrivateProfileString(L"SET", L"TeeCmd", (teeCmd.find(L'"') == wstring::npos ? teeCmd : L'"' + teeCmd + L'"').c_str(), iniPath.c_str());
-			WritePrivateProfileString(L"SET", L"TeeSize", teeSize.c_str(), iniPath.c_str());
-			WritePrivateProfileString(L"SET", L"TeeDelay", teeDelay.c_str(), iniPath.c_str());
-		}
-	}
+  //-----  Write_PF  -----
+  //設定ダイアログ無効化
+  return;
 
-//	MessageBox(parentWnd, PLUGIN_NAME, L"Write PlugIn", MB_OK);
+
+	//WCHAR dllPath[MAX_PATH];
+	//DWORD ret = GetModuleFileName(g_instance, dllPath, MAX_PATH);
+	//if( ret && ret < MAX_PATH ){
+	//	wstring iniPath = wstring(dllPath) + L".ini";
+	//	wstring size = GetPrivateProfileToString(L"SET", L"Size", L"770048", iniPath.c_str());
+	//	wstring teeCmd = GetPrivateProfileToString(L"SET", L"TeeCmd", L"", iniPath.c_str());
+	//	wstring teeSize = GetPrivateProfileToString(L"SET", L"TeeSize", L"770048", iniPath.c_str());
+	//	wstring teeDelay = GetPrivateProfileToString(L"SET", L"TeeDelay", L"0", iniPath.c_str());
+	//	CSettingDlg dlg;
+	//	if( dlg.CreateSettingDialog(g_instance, parentWnd, size, teeCmd, teeSize, teeDelay) == IDOK ){
+	//		WritePrivateProfileString(L"SET", L"Size", size.c_str(), iniPath.c_str());
+	//		WritePrivateProfileString(L"SET", L"TeeCmd", (teeCmd.find(L'"') == wstring::npos ? teeCmd : L'"' + teeCmd + L'"').c_str(), iniPath.c_str());
+	//		WritePrivateProfileString(L"SET", L"TeeSize", teeSize.c_str(), iniPath.c_str());
+	//		WritePrivateProfileString(L"SET", L"TeeDelay", teeDelay.c_str(), iniPath.c_str());
+	//	}
+	//}
+
 }
 
 //複数保存対応のためインスタンスを新規に作成する
