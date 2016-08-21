@@ -85,7 +85,7 @@ void PipeServer::Initialize(wstring filepath, wstring iniPath)
   }
 
   //FileReader
-  int pipe_Buff_B = (int)(pipe_Buff_MiB * 1024 * 1024);
+  int pipe_Buff_B = static_cast<int>(pipe_Buff_MiB * 1024 * 1024);
   reader = make_unique<FileReader>(filepath, pipe_Buff_B);
 
   //thread
