@@ -45,8 +45,8 @@ Write_Default --> Write_PF  の変更箇所
 ///=============================
 ///constructor
 ///=============================
-PipeServer::PipeServer(){ }
-PipeServer::~PipeServer(){ }
+PipeServer::PipeServer() { }
+PipeServer::~PipeServer() { }
 
 
 
@@ -178,7 +178,7 @@ void PipeServer::AppendData(BYTE* data, const DWORD size)
 
 void PipeServer::AppendData(vector<BYTE> &data, const DWORD size)
 {
-  if (this->Initialized == false) 
+  if (this->Initialized == false)
     throw exception();
 
   reader->AppendBuff(&data.front(), size);
@@ -201,20 +201,14 @@ void PipeServer::SendMain()
 
   bool connect = pipe->Connect();
   if (connect == false)
-  {
-    // hQuitOrder or エラー
-    return;
-  }
+    return;// hQuitOrder or error
 
 
   bool quit = false;
   while (true)
   {
     if (quit)
-    {
-      // hQuitOrder or エラー
-      break;
-    }
+      break;// hQuitOrder or error
 
     if (this->TS_FinishWrite)
     {
@@ -236,17 +230,13 @@ void PipeServer::SendMain()
       DWORD written = 0;
       BOOL success = pipe->Write(data, size, written);
       if (success)
-        reader->Seek_Read_fpos(written);
+        reader->Seek_fpos_read(written);
       else
-        quit = true;// hQuitOrder or エラー
-
-      //録画中ならsleep
-      if (this->TS_FinishWrite == false)
-        Sleep(100);
+        quit = true;
     }
     else
     {
-      Sleep(30);
+      Sleep(50);
     }
 
   }//end while

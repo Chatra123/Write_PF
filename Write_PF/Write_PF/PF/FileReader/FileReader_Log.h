@@ -7,16 +7,15 @@
 class FileReader_Log
 {
 #ifdef NDEBUG  // Release
-  const bool Enable = false;       // fix false
+  const bool Enable = false;           // fix false
 #else
-  const bool Enable = false;       // true  or  false
+  const bool Enable = false;            // true  or  false
 #endif
 
   mutex sync;
   wofstream logfile;
+  __int64 TotalAppendTry = 0;          //BuffにAppendを試みたサイズ
 
-  __int64 TotalAppendTry = 0;      //BuffにAppendを試みたサイズ　＜成功、失敗、ロック失敗の合計＞
- 
 
   ///=============================
   /// Constructor
@@ -33,12 +32,13 @@ public:
     locale::global(locale("japanese"));  //locale設定しないと日本語が出力されない。
     logfile = wofstream(logpath);
   }
-  ~FileReader_Log(){ }
+  ~FileReader_Log() { }
 
 
   ///=============================
   ///Close
   ///=============================
+public:
   void Close()
   {
     if (Enable == false) return;
@@ -57,6 +57,7 @@ public:
   /// WriteLine
   ///=============================
 #pragma warning(disable:4996)   //_snwprintf
+public:
   template <typename ... Args>
   void WriteLine(const wchar_t *format, Args const & ... args)
   {
@@ -77,10 +78,10 @@ public:
 #pragma warning(default:4996)
 
 
-
   ///=============================
   ///WriteLine
   ///=============================
+public:
   void WriteLine(const wstring line)
   {
     WriteLine(line.c_str());
@@ -90,23 +91,11 @@ public:
   ///=============================
   ///AppendBuff
   ///=============================
+public:
   void AppendBuff(const __int64 fpos, const DWORD size)
   {
     TotalAppendTry += size;
-
-    WriteLine(L"  ++ append  buff         fpos = %10llu                           size = %6d    total_try = %10llu",
-      fpos, size, TotalAppendTry);
-  }
-
-
-  ///=============================
-  ///AppendBuff    Fail to append  
-  ///=============================
-  void AppendBuff_FailAppend(const __int64 fpos, const DWORD size)
-  {
-    TotalAppendTry += size;
-
-    WriteLine(L"++.. fail append buff     fpos = %10llu                           size = %6d    total_try = %10llu",
+    WriteLine(L"  ++ buff                 fpos = %10llu                           size = %6d    total_try = %10llu",
       fpos, size, TotalAppendTry);
   }
 
@@ -114,10 +103,10 @@ public:
   ///=============================
   ///AppendBuff    Fail to Lock
   ///=============================
+public:
   void AppendBuff_FailLock(const __int64 fpos, const DWORD size)
   {
     TotalAppendTry += size;
-
     WriteLine(L"  .. fail append lock     fpos = %10llu                           size = %6d    total_try = %10llu",
       fpos, size, TotalAppendTry);
   }
@@ -126,9 +115,10 @@ public:
   ///=============================
   ///ReleaseBuff
   ///=============================
+public:
   void ReleaseBuff(const __int64 fpos, const DWORD size)
   {
-    WriteLine(L"  -- release buff         fpos = %10llu                           size = %6d",
+    WriteLine(L"  -- buff                 fpos = %10llu                           size = %6d",
       fpos, size);
   }
 
@@ -136,6 +126,7 @@ public:
   ///=============================
   ///GetData_fromBuff
   ///=============================
+public:
   void GetData_fromBuff(const __int64 fpos, const DWORD size)
   {
     WriteLine(L"          ( )from Buff      fpos = %10llu                         size = %6d ",
@@ -146,6 +137,7 @@ public:
   ///=============================
   ///GetData_fromFile
   ///=============================
+public:
   void GetData_fromFile(const __int64 fpos, const DWORD size)
   {
     WriteLine(L"           $ from file      fpos = %10llu                         size = %6d",
@@ -156,10 +148,12 @@ public:
   ///=============================
   ///Seek
   ///=============================
-  void Seek_Read_fpos(const __int64 fpos_read_before, const __int64 fpos_read, const DWORD  size)
+public:
+  void Seek_Read_fpos(const __int64 fpos_read, const DWORD  size)
   {
+    __int64 before = fpos_read - size;
     WriteLine(L"             Seek_Read      fpos = %10llu    next = %10llu    size = %6d",
-      fpos_read_before, fpos_read, size);
+      before, fpos_read, size);
   }
 
 

@@ -21,8 +21,8 @@ private:
   unique_ptr<StreamBuff> buff;
   ifstream ifile;
 
-  __int64 fpos_read = 0;               //ファイル読込み位置
-  __int64 fpos_write = 0;              //実ファイル書込みの先端位置
+  __int64 fpos_read = 0;               //仮想ファイル読込み位置
+  __int64 fpos_write = 0;              //実ファイル書込みの先端
   bool TS_FinishWrite = false;
 
   shared_ptr<FileReader_Log> log;
@@ -32,25 +32,23 @@ private:
   /// Constructor
   ///=============================
 public:
-  FileReader(wstring filepath, int streamBuffSize)
+  FileReader(wstring filepath, int buffsize)
   {
     log = make_shared<FileReader_Log>(filepath);
 
     //file
     this->ifile.open(filepath, ios_base::in | ios_base::binary, _SH_DENYNO);
     //StreamBuff
-    this->buff = make_unique<StreamBuff>(streamBuffSize, log);
+    this->buff = make_unique<StreamBuff>(buffsize, log);
   }
   ~FileReader() { }
 
   void Close()
   {
-    lock_guard<timed_mutex> lock(sync);
     log->Close();
     if (ifile)
       ifile.close();
   }
-
 
 
   ///=============================
@@ -71,7 +69,7 @@ public:
       auto append_size = make_shared<DWORD>(size);
       memcpy(append_data.get(), data, size);
 
-      buff->AppendData(append_fpos, append_data, append_size);
+      buff->Append(append_fpos, append_data, append_size);
       fpos_write += size;
     }
     else
@@ -94,7 +92,7 @@ public:
 
 
   ///=============================
-  ///Is_EOF
+  ///IsEOF
   ///=============================
 public:
   bool IsEOF()
@@ -110,39 +108,39 @@ public:
   ///データ取得
   ///=============================
 public:
-  void GetNext(shared_ptr<BYTE> &retData, shared_ptr<DWORD> &retSize)
+  void GetNext(shared_ptr<BYTE> &ret_data, shared_ptr<DWORD> &ret_size)
   {
     if (!ifile) return;
 
-    __int64 readable_fpos;  //ファイル読込可能な最大位置
+    __int64 readable_fpos;  //実ファイルの読込可能な最大位置
 
     //Stream Buff
     {//lock scope
       lock_guard<timed_mutex> lock(sync);
 
-      // buff is empty ?
-      //　バッファ消化が早いときにすぐにファイル読込みをしないように制限
+      //buff is empty ?
+      //  バッファ消化が早いときにすぐにファイル読込みをしないように制限
       bool buffIsEmpty = buff->GetTopPos() < 0;
       if (buffIsEmpty && TS_FinishWrite == false)
-        return;                                //バッファが埋まるまで return sleep()
+        return;
       readable_fpos = TS_FinishWrite ? -1 : buff->GetTopPos() - 1;
 
-      buff->GetData(fpos_read, retData, retSize);
-      if (retData != nullptr)
+      buff->GetData(fpos_read, ret_data, ret_size);
+      if (ret_data != nullptr)
       {
-        //success read
-        log->GetData_fromBuff(fpos_read, *retSize);
+        //success
+        log->GetData_fromBuff(fpos_read, *ret_size);
         return;
       }
     }//lock scope
 
 
     //File
-    GetData_fromFile(fpos_read, readable_fpos, retData, retSize);
-    if (retData != nullptr)
+    GetData_fromFile(fpos_read, readable_fpos, ret_data, ret_size);
+    if (ret_data != nullptr)
     {
-      //success read
-      log->GetData_fromFile(fpos_read, *retSize);
+      //success
+      log->GetData_fromFile(fpos_read, *ret_size);
       return;
     }
 
@@ -159,27 +157,18 @@ public:
 private:
   void GetData_fromFile(
     const __int64 req_fpos, const __int64 readable_fpos,
-    shared_ptr<BYTE> &retData, shared_ptr<DWORD> &retSize)
+    shared_ptr<BYTE> &ret_data, shared_ptr<DWORD> &ret_size)
   {
     if (ifile.fail() || ifile.eof())
       return;
 
     const UINT ReadMax = 770048;
-    /*
-      ファイルから ReadMax [byte] 読込むたびに100msのSleepをいれ
-      ているので最大速度は制限される。
-      ReadMaxが小さすぎるのはダメ。録画速度以下だとバッファに
-      追いつけなくなる。
-        ( 770,048 / 1 ) [byte/times]  *  10 [times/sec]  =  7.7 [MB/sec]
-        ( 770,048 / 2 ) [byte/times]  *  10 [times/sec]  =  3.9 [MB/sec]
-    */
-
     __int64 req_size;
     {
-      //req_sizeはStreamBuffの手前まで。
       //ＴＳ書込が完了なら readable_fpos < 0
+      __int64 req_pos_last = req_fpos + ReadMax - 1;
       if (0 <= readable_fpos
-        && readable_fpos < req_fpos + ReadMax)
+        && readable_fpos < req_pos_last)
         req_size = readable_fpos - req_fpos + 1;
       else
         req_size = ReadMax;
@@ -187,15 +176,15 @@ private:
     if (req_size <= 0)
       return;
 
-    shared_ptr<BYTE> data(new BYTE[ReadMax]);
+    shared_ptr<BYTE> data(new BYTE[(UINT)req_size]);
     ifile.seekg(req_fpos, ios_base::beg);
     __int64 gcount = ifile.read((char *)data.get(), sizeof(char) * req_size).gcount();
     auto size = make_shared<DWORD>((DWORD)gcount);
     if (gcount == 0)
       return;
 
-    retData = data;
-    retSize = size;
+    ret_data = data;
+    ret_size = size;
   }
 
 
@@ -203,12 +192,10 @@ private:
   ///Seek
   ///=============================
 public:
-  void Seek_Read_fpos(const DWORD size)
+  void Seek_fpos_read(const DWORD seek)
   {
-    fpos_read += size;
-
-    __int64 fpos_read_before = fpos_read - size;
-    log->Seek_Read_fpos(fpos_read_before, fpos_read, size);
+    fpos_read += seek;
+    log->Seek_Read_fpos(fpos_read, seek);
   }
 
 
