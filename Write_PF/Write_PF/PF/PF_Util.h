@@ -4,15 +4,15 @@
 
 class PF_Util
 {
-  ///=============================
-  ///アプリフォルダをカレントに設定
-  ///=============================
+///=============================
+///アプリケーションフォルダをカレントに設定
+///=============================
 public:
   static void SetCurrent_AppFolder()
   {
     wchar_t appPath[_MAX_PATH];
     GetModuleFileName(NULL, appPath, _MAX_PATH);
-    // folder path
+    // full path --> folder path
     wchar_t root[_MAX_PATH], dir[_MAX_PATH];
     _wsplitpath_s(appPath, root, _MAX_PATH, dir, _MAX_PATH, NULL, 0, NULL, 0);
     wstring appDir = wstring(root) + wstring(dir);
@@ -20,9 +20,9 @@ public:
   }
 
 
-  ///=============================
-  ///UUID作成
-  ///=============================
+///=============================
+///UUID作成
+///=============================
 public:
   static wstring GetUUID()
   {
@@ -30,9 +30,9 @@ public:
     UuidCreate(&uuid);
     RPC_WSTR lpszUuid = NULL;
     UuidToString(&uuid, &lpszUuid);
-    wstring strId = (LPCTSTR)lpszUuid;
+    wstring strID = (LPCTSTR)lpszUuid;
     RpcStringFree(&lpszUuid);
-    return strId;
+    return strID;
   }
 
 };
@@ -42,9 +42,9 @@ public:
 
 class Ini_Util
 {
-  ///=============================
-  /// ini --> string
-  ///=============================
+///=============================
+/// ini --> string
+///=============================
 public:
   static wstring GetString(wstring key, wstring value, wstring defalut, wstring inipath)
   {
@@ -54,9 +54,9 @@ public:
   }
 
 
-  ///=============================
-  /// ini --> int
-  ///=============================
+///=============================
+/// ini --> int
+///=============================
 public:
   static int GetInt(wstring key, wstring value, int defalut, wstring inipath)
   {
@@ -66,9 +66,9 @@ public:
   }
 
 
-  ///=============================
-  /// ini --> double
-  ///=============================
+///=============================
+/// ini --> double
+///=============================
 public:
   static double GetDouble(wstring key, wstring value, double defalut, wstring inipath)
   {
@@ -78,9 +78,9 @@ public:
   }
 
 
-  ///=============================
-  /// ini --> bool
-  ///=============================
+///=============================
+/// ini --> bool
+///=============================
 public:
   static bool GetBool(wstring key, wstring value, bool defalut, wstring inipath)
   {
@@ -94,9 +94,9 @@ public:
 
 class PF_ini
 {
-  ///=============================
-  /// Create ini
-  ///=============================
+///=============================
+/// Create ini
+///=============================
 public:
   static void Create(wstring inipath)
   {
@@ -115,14 +115,6 @@ public:
     WritePrivateProfileString(L"Client", L"Hide", L"1", inipath.c_str());
   }
 };
-
-
-
-
-
-
-
-
 
 
 

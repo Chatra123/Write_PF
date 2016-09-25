@@ -4,15 +4,13 @@
   $(Platform)\$(Configuration)\WriteDllTester_edcb.exe
   $(Platform)\$(Configuration)\e.exe
 
-
 デバッグ  -->  引数
   args[1]               [2]              [3]                 [4]           [5]                [6]
   "input file"          "output folder"  "output_foldersub"  limit_MiBsec  dll_name           overwrite
   "D:\input.ts"         "D:\\"           "E:\\"              0             Write_Default.dll  1
   "D:\input.ts"         "D:\rec\\"       "E:\\"              -1
+  "E:\TS_Samp\t2s.ts"   "E:\pf_out"      "D:"                1.9           Write_Default.dll  1
   "E:\TS_Samp\t2s.ts"   "E:\pf_out"      "D:"                20.0          Write_PF.dll       1
-  "E:\TS_Samp\t60s.ts"  "E:\pf_out"      "D:"                1.9           Write_PF.dll       1
-  "E:\TS_Samp\t60s.ts"  "E:\pf_out"      "D:"                1.9           Write_Default.dll  1
 
 
   ・出力フォルダが存在しないと作成される。
@@ -34,9 +32,6 @@ Write_Default --> Write_PF  の変更箇所
   PipeServer.cpp --> プロパティ --> プリコンパイル済みヘッダーを使用しない
 
 */
-
-
-
 #pragma once
 #include "stdafx.h"
 #include "PipeServer.h"
@@ -83,11 +78,9 @@ void PipeServer::Initialize(wstring filepath, wstring iniPath)
     wstring command = L"\"" + client_Path + L"\"  " + args;
     pipe->RunClient(command, client_Hide);
   }
-
   //FileReader
   int pipe_Buff_B = static_cast<int>(pipe_Buff_MiB * 1024 * 1024);
   reader = make_unique<FileReader>(filepath, pipe_Buff_B);
-
   //thread
   this->hSenderThread = thread(SendMain_Invoker, (LPVOID)this);
 
@@ -104,7 +97,6 @@ wstring PipeServer::ReplaceMacro(
   const wstring pipeName, const wstring filePath)
 {
   wstring args = baseArgs;
-
   //r11まで
   wregex regex1(L"(\\$npipe\\$)", regex_constants::icase);
   args = regex_replace(args, regex1, pipeName);
@@ -116,7 +108,6 @@ wstring PipeServer::ReplaceMacro(
   args = regex_replace(args, regex3, pipeName);
   wregex regex4(L"(\\$FilePath\\$)", regex_constants::icase);
   args = regex_replace(args, regex4, filePath);
-
   return args;
 }
 
@@ -131,7 +122,6 @@ wstring PipeServer::ReplaceMacro(
     - hSenderThread.join();ができない
     - abort() has been called
     - mutex処理のアクセス違反　等々
-
   通常実行ではすぐにスレッドが終了するので問題ない。
 */
 void PipeServer::Stop()
@@ -144,16 +134,13 @@ void PipeServer::Stop()
 
   //送信スレッドにＴＳファイル書き込み完了を通知
   this->TS_FinishWrite = true;
-  Sleep(1000);
-
+  Sleep(500);
 
   //停止命令
   if (hQuitOrder)
     SetEvent(hQuitOrder);
-
   if (hSenderThread.joinable())
     hSenderThread.join();
-
   if (hQuitOrder)
   {
     CloseHandle(hQuitOrder);
@@ -161,7 +148,6 @@ void PipeServer::Stop()
   }
 
 }
-
 
 
 
@@ -218,7 +204,6 @@ void PipeServer::SendMain()
         break;
     }
 
-
     //read
     shared_ptr<BYTE> data = nullptr;
     shared_ptr<DWORD> size = nullptr;
@@ -230,15 +215,14 @@ void PipeServer::SendMain()
       DWORD written = 0;
       BOOL success = pipe->Write(data, size, written);
       if (success)
-        reader->Seek_fpos_read(written);
+        reader->Seek_fpos_Read(written);
       else
         quit = true;
     }
     else
     {
-      Sleep(50);
+      Sleep(100);
     }
-
   }//end while
 
   pipe->Close();

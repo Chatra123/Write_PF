@@ -23,6 +23,7 @@ public:
   ~NamedPipe(){}
 
 
+
   ///=============================
   ///　クライアント起動
   ///=============================
@@ -53,7 +54,6 @@ public:
       CloseHandle(pi.hThread);
       CloseHandle(pi.hProcess);
     }
-
   }
 
 
@@ -61,6 +61,7 @@ public:
   ///=============================
   ///　パイプ接続
   ///=============================
+public:
   bool Connect()
   {
     //作成
@@ -212,20 +213,16 @@ private:
 
     //WaitForMultipleObjects
     //  複数のオブジェクトがシグナル状態になった場合は、最小のインデックス番号が返ります。
-    DWORD ret = WaitForMultipleObjects(2, hWaits, FALSE, INFINITE);
     //  hEvent               -->  ret = 1;
     //  hQuitEvent           -->  ret = 0;
     //  hQuitEvent & hEvent  -->  ret = 0;
-
+    DWORD ret = WaitForMultipleObjects(2, hWaits, FALSE, INFINITE);
     return ret == WAIT_OBJECT_0 + 1;
   }
 
 
-
-
-
+  
 };
-
 
 
 

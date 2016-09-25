@@ -25,12 +25,10 @@ public:
   {
     if (Enable == false) return;
 
-    wstring logpath = basepath + L".wrpf.log";
-    //logpath = L"E:\\pf_out\\test.wrpf.log";
-
     lock_guard<mutex> lock(sync);
     locale::global(locale("japanese"));  //localeê›íËÇµÇ»Ç¢Ç∆ì˙ñ{åÍÇ™èoóÕÇ≥ÇÍÇ»Ç¢ÅB
-    logfile = wofstream(logpath);
+    wstring path = basepath + L".wrpf.log";
+    logfile = wofstream(path);
   }
   ~FileReader_Log() { }
 
@@ -149,14 +147,12 @@ public:
   ///Seek
   ///=============================
 public:
-  void Seek_Read_fpos(const __int64 fpos_read, const DWORD  size)
+  void Seek_fpos_Read(const __int64 fpos_read, const DWORD size)
   {
     __int64 before = fpos_read - size;
     WriteLine(L"             Seek_Read      fpos = %10llu    next = %10llu    size = %6d",
       before, fpos_read, size);
   }
-
-
 
 
 

@@ -20,7 +20,6 @@ private:
   timed_mutex sync;
   unique_ptr<StreamBuff> buff;
   ifstream ifile;
-
   __int64 fpos_read = 0;               //仮想ファイル読込み位置
   __int64 fpos_write = 0;              //実ファイル書込みの先端
   bool TS_FinishWrite = false;
@@ -35,7 +34,6 @@ public:
   FileReader(wstring filepath, int buffsize)
   {
     log = make_shared<FileReader_Log>(filepath);
-
     //file
     this->ifile.open(filepath, ios_base::in | ios_base::binary, _SH_DENYNO);
     //StreamBuff
@@ -60,7 +58,7 @@ public:
     if (size == 0) return;
 
     //メインスレッドから呼ばれるので timeout
-    unique_lock<timed_mutex> lock(sync, chrono::milliseconds(0));
+    unique_lock<timed_mutex> lock(sync, chrono::milliseconds(20));
     if (lock)
     {
       //copy data
@@ -192,28 +190,15 @@ private:
   ///Seek
   ///=============================
 public:
-  void Seek_fpos_read(const DWORD seek)
+  void Seek_fpos_Read(const DWORD seek)
   {
     fpos_read += seek;
-    log->Seek_Read_fpos(fpos_read, seek);
+    log->Seek_fpos_Read(fpos_read, seek);
   }
 
 
 
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

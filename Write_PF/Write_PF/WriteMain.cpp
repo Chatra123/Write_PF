@@ -95,10 +95,10 @@ BOOL CWriteMain::Start(
 
   //-----  Write_PF  -----
   {
-    //EpgDataCap_Bon.exeのフォルダパスをカレントに変更
+#ifdef _DEBUG
+    //WriteDllTester_edcb.exeのフォルダパスをカレントに変更
     //  VisualStudioだとプロジェクトフォルダが
     //  カレントになっているので exeフォルダに変更
-#ifdef _DEBUG
     PF_Util::SetCurrent_AppFolder();
 #endif
 
@@ -112,11 +112,9 @@ BOOL CWriteMain::Start(
     //write ini
     PF_ini::Create(iniPath);
 
-
     //server
     this->server = make_unique<PipeServer>();
     this->server->Initialize(this->savePath, iniPath);
-
   } //-----  Write_PF  -----
 
 
