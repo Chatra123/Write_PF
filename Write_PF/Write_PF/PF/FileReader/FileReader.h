@@ -1,51 +1,49 @@
 /*
-  仮想のＴＳファイルから読込
-    （ ＴＳ書込用データと実ファイル ）
-    （ StreamBuff        ifstream   ）
+仮想のＴＳファイルから読込
+（ ＴＳ書込用データと実ファイル ）
+（ FileBlockBuff     ifstream   ）
 
 */
 #pragma once
 #include "../../stdafx.h"
-#include "StreamBuff.h"
+#include "FileBlockBuff.h"
 #include "FileReader_Log.h"
 
 
-
-///=============================
-///ファイル読込
-///=============================
 class FileReader
 {
 private:
   timed_mutex sync;
-  unique_ptr<StreamBuff> buff;
-  ifstream ifile;
-  __int64 fpos_read = 0;               //仮想ファイル読込み位置
-  __int64 fpos_write = 0;              //実ファイル書込みの先端
-  bool TS_FinishWrite = false;
-
+  unique_ptr<FileBlockBuff> buff;
   shared_ptr<FileReader_Log> log;
+  FILE *fp;
+  __int64 fpos_read = 0;         //仮想ファイル読込み位置
+  __int64 fpos_write = 0;        //実ファイル書込みの先端
+  bool TS_FinishWrite = false;
 
 
   ///=============================
   /// Constructor
   ///=============================
 public:
-  FileReader(wstring filepath, int buffsize)
+  FileReader(
+    const wstring filepath,
+    const int buffsize,
+    const int no)
   {
-    log = make_shared<FileReader_Log>(filepath);
-    //file
-    this->ifile.open(filepath, ios_base::in | ios_base::binary, _SH_DENYNO);
-    //StreamBuff
-    this->buff = make_unique<StreamBuff>(buffsize, log);
+    wstring logpath = filepath + L".wrpf-" + to_wstring(no) + L".log";
+    log = make_shared<FileReader_Log>(logpath);
+    buff = make_unique<FileBlockBuff>(buffsize, log);
+    fp = _wfsopen(filepath.c_str(), L"rbN", _SH_DENYNO);
+    // N :子プロセスに継承しない
+    //"N"がないとAnonPipeでclientを開くときにfpも渡してしまう。
+    //大きな問題になることはないが、pfAdapterが終了するまでfilepathの移動ができなくなる。
+    //NamedPipeなら"N"はなくても問題ない。
   }
-  ~FileReader() { }
-
   void Close()
   {
-    log->Close();
-    if (ifile)
-      ifile.close();
+    if (fp)
+      fclose(fp);
   }
 
 
@@ -53,12 +51,10 @@ public:
   ///バッファにデータ追加
   ///=============================
 public:
-  void AppendBuff(BYTE* data, const DWORD size)
+  void Append(BYTE* data, const DWORD size)
   {
-    if (size == 0) return;
-
     //メインスレッドから呼ばれるので timeout
-    unique_lock<timed_mutex> lock(sync, chrono::milliseconds(20));
+    unique_lock<timed_mutex> lock(sync, chrono::milliseconds(10));
     if (lock)
     {
       //copy data
@@ -66,13 +62,12 @@ public:
       shared_ptr<BYTE> append_data(new BYTE[size]);
       auto append_size = make_shared<DWORD>(size);
       memcpy(append_data.get(), data, size);
-
       buff->Append(append_fpos, append_data, append_size);
       fpos_write += size;
     }
     else
     {
-      log->AppendBuff_FailLock(fpos_write, size);
+      log->FailLock(fpos_write, size);
       fpos_write += size;
     }
   }
@@ -84,7 +79,7 @@ public:
 public:
   void Notify_TSFinishWrite()
   {
-    //”バッファ０のときにファイル読込み禁止”を解除
+    //”ファイル読込はBuff fposの手前まで”の制限を解除
     TS_FinishWrite = true;
   }
 
@@ -95,8 +90,8 @@ public:
 public:
   bool IsEOF()
   {
-    if (ifile)
-      return ifile.fail() || ifile.eof();
+    if (fp)
+      return ferror(fp) || feof(fp);
     else
       return true;
   }
@@ -108,56 +103,49 @@ public:
 public:
   void GetNext(shared_ptr<BYTE> &ret_data, shared_ptr<DWORD> &ret_size)
   {
-    if (!ifile) return;
+    //実ファイルの読込を許可する最大位置　　buffの手前まで。
+    __int64 readable_fpos;
 
-    __int64 readable_fpos;  //実ファイルの読込可能な最大位置
-
-    //Stream Buff
+    //Buff
     {//lock scope
       lock_guard<timed_mutex> lock(sync);
-
       //buff is empty ?
       //  バッファ消化が早いときにすぐにファイル読込みをしないように制限
       bool buffIsEmpty = buff->GetTopPos() < 0;
       if (buffIsEmpty && TS_FinishWrite == false)
         return;
       readable_fpos = TS_FinishWrite ? -1 : buff->GetTopPos() - 1;
-
       buff->GetData(fpos_read, ret_data, ret_size);
-      if (ret_data != nullptr)
-      {
-        //success
-        log->GetData_fromBuff(fpos_read, *ret_size);
-        return;
-      }
-    }//lock scope
-
-
-    //File
-    GetData_fromFile(fpos_read, readable_fpos, ret_data, ret_size);
+    }
     if (ret_data != nullptr)
     {
-      //success
-      log->GetData_fromFile(fpos_read, *ret_size);
+      log->GetData_fromBuff(fpos_read, *ret_size);
       return;
     }
 
+    //File
+    Get_fromFile(fpos_read, readable_fpos, ret_data, ret_size);
+    if (ret_data != nullptr)
+    {
+      log->GetData_fromFile(fpos_read, *ret_size);
+      return;
+    }
     return;
   }
 
 
 
   ///=============================
-  ///データ取得　ファイル読込
+  ///実ファイル読込
   ///=============================
-  //  ファイル読み込みは StreamBuff内のデータ位置と重ならないようにする。
-  //  常に StreamBuff fposの手前でとめる。
+  //”ファイル読込はBuff fposの手前まで”に制限
+  //Buff fposと重ならないようにする。
 private:
-  void GetData_fromFile(
+  void Get_fromFile(
     const __int64 req_fpos, const __int64 readable_fpos,
     shared_ptr<BYTE> &ret_data, shared_ptr<DWORD> &ret_size)
   {
-    if (ifile.fail() || ifile.eof())
+    if (!fp || ferror(fp) || feof(fp))
       return;
 
     const UINT ReadMax = 770048;
@@ -175,31 +163,30 @@ private:
       return;
 
     shared_ptr<BYTE> data(new BYTE[(UINT)req_size]);
-    ifile.seekg(req_fpos, ios_base::beg);
-    __int64 gcount = ifile.read((char *)data.get(), sizeof(char) * req_size).gcount();
-    auto size = make_shared<DWORD>((DWORD)gcount);
-    if (gcount == 0)
+    _fseeki64(fp, req_fpos, SEEK_SET);
+    size_t read_count = fread((char *)data.get(), sizeof(char), (size_t)req_size, fp);
+    auto size = make_shared<DWORD>((DWORD)read_count);
+    if (read_count == 0)
       return;
-
     ret_data = data;
     ret_size = size;
   }
+
 
 
   ///=============================
   ///Seek
   ///=============================
 public:
-  void Seek_fpos_Read(const DWORD seek)
+  void Seek(const DWORD seek)
   {
     fpos_read += seek;
-    log->Seek_fpos_Read(fpos_read, seek);
+    log->Seek(fpos_read, seek);
   }
 
 
 
 };
-
 
 
 

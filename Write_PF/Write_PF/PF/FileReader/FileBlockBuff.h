@@ -4,26 +4,27 @@
 
 
 ///=============================
-///ＴＳ書き込み用のデータをバッファに保持
+///DataをSize単位でBuffに保持
 ///=============================
-//  thread safe
-class StreamBuff
+class FileBlockBuff
 {
 private:
-  mutex sync;
   __int64 BuffMax;
   deque<shared_ptr<__int64>> Que_fpos;
   deque<shared_ptr<BYTE>> Que_Data;
   deque<shared_ptr<DWORD>> Que_Size;
-
   shared_ptr<FileReader_Log> log;
 
-
+  ///=============================
+  ///constructor
+  ///=============================
 public:
-  StreamBuff(int _buffmax, shared_ptr<FileReader_Log> &_log)
-    : BuffMax(_buffmax), log(_log) { }
-  ~StreamBuff() { }
-
+  FileBlockBuff(const int buffsize,
+    shared_ptr<FileReader_Log> log)
+  {
+    this->BuffMax = buffsize;
+    this->log = log;
+  }
 
   ///=============================
   ///総サイズ取得
@@ -39,18 +40,16 @@ private:
 
 
   ///=============================
-  /// バッファ先頭のファイル位置を取得
+  /// バッファ先頭のファイル位置を取得　　最小のファイル位置
   ///=============================
 public:
   __int64 GetTopPos()
   {
-    lock_guard<mutex> lock(sync);
     if (Que_fpos.empty())
       return -1;
     else
       return *Que_fpos.front();
   }
-
 
 
   ///=============================
@@ -62,24 +61,19 @@ public:
     shared_ptr<BYTE> &data,
     shared_ptr<DWORD> &size)
   {
-    lock_guard<mutex> lock(sync);
-
     //dequeue
     while (0 < Que_fpos.size()
       && BuffMax < GetCurSize() + *size)
     {
       log->ReleaseBuff(*Que_fpos.front(), *Que_Size.front());
-
       Que_fpos.pop_front();
       Que_Data.pop_front();
       Que_Size.pop_front();
     }
-
     //enqueue
     if (GetCurSize() + *size <= BuffMax)
     {
       log->AppendBuff(*fpos, *size);
-
       Que_fpos.emplace_back(fpos);
       Que_Data.emplace_back(data);
       Que_Size.emplace_back(size);
@@ -94,9 +88,7 @@ public:
   void GetData(const __int64 req_fpos,
     shared_ptr<BYTE> &ret_data, shared_ptr<DWORD> &ret_size)
   {
-    lock_guard<mutex> lock(sync);
-
-    // find req_fpos at Que
+    //find req_fpos at Que
     int idx_found = -1;
     for (size_t i = 0; i < Que_fpos.size(); i++)
     {
@@ -109,7 +101,7 @@ public:
     if (idx_found == -1)
       return;// not found
 
-    //share
+             //share
     ret_data = Que_Data[idx_found];
     ret_size = Que_Size[idx_found];
 
@@ -117,16 +109,14 @@ public:
     for (int i = 0; i <= idx_found; i++)
     {
       log->ReleaseBuff(*Que_fpos.front(), *Que_Size.front());
-
       Que_fpos.pop_front();
       Que_Data.pop_front();
       Que_Size.pop_front();
     }
   }
 
-
-
 };
+
 
 
 

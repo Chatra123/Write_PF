@@ -9,7 +9,7 @@ class FileReader_Log
 #ifdef NDEBUG  // Release
   const bool Enable = false;           // fix false
 #else
-  const bool Enable = false;            // true  or  false
+  const bool Enable = false;           // true  or  false
 #endif
 
   mutex sync;
@@ -17,39 +17,32 @@ class FileReader_Log
   __int64 TotalAppendTry = 0;          //BuffにAppendを試みたサイズ
 
 
-  ///=============================
-  /// Constructor
-  ///=============================
+///=============================
+/// Constructor
+///=============================
 public:
-  FileReader_Log(const wstring basepath)
+  FileReader_Log(const wstring path)
   {
     if (Enable == false) return;
 
     lock_guard<mutex> lock(sync);
     locale::global(locale("japanese"));  //locale設定しないと日本語が出力されない。
-    wstring path = basepath + L".wrpf.log";
     logfile = wofstream(path);
   }
-  ~FileReader_Log() { }
-
+  ~FileReader_Log() { Close(); }
 
   ///=============================
   ///Close
   ///=============================
-public:
+private:
   void Close()
   {
-    if (Enable == false) return;
-
     WriteLine(L"");
-    WriteLine(L"                                                                                  TotalAppendTry = %10llu",
-      TotalAppendTry);
-
+    WriteLine(close, std::this_thread::get_id(), TotalAppendTry);
     lock_guard<mutex> lock(sync);
     if (logfile)
       logfile.close();
   }
-
 
   ///=============================
   /// WriteLine
@@ -57,33 +50,34 @@ public:
 #pragma warning(disable:4996)   //_snwprintf
 public:
   template <typename ... Args>
-  void WriteLine(const wchar_t *format, Args const & ... args)
+  void WriteLine(const wstring format, Args const & ... args)
   {
     if (Enable == false) return;
-
-    wstring text;
+    wstring line;
     {
       wchar_t buf[256];
-      _snwprintf(buf, 256, format, args ...);
-      text = wstring(buf);
+      _snwprintf(buf, 256, format.c_str(), args ...);
+      line = wstring(buf);
     }
-
     lock_guard<mutex> lock(sync);
-    wcerr << text << endl;
+    if (wcerr)
+      wcerr << line << endl;
     if (logfile)
-      logfile << text << endl;
+      logfile << line << endl;
   }
 #pragma warning(default:4996)
 
 
   ///=============================
-  ///WriteLine
+  ///log text
   ///=============================
-public:
-  void WriteLine(const wstring line)
-  {
-    WriteLine(line.c_str());
-  }
+  const wstring appe = L" %08x    ++ buff           fpos = %10llu                           size = %6d    total_try = %10llu";
+  const wstring fail = L" %08x    .. fail           fpos = %10llu                           size = %6d    total_try = %10llu";
+  const wstring rele = L" %08x    -- buff           fpos = %10llu                           size = %6d";
+  const wstring fromBuff = L" %08x    ( )from Buff      fpos = %10llu                           size = %6d ";
+  const wstring fromFile = L" %08x     $ from file      fpos = %10llu                           size = %6d";
+  const wstring seek = L" %08x       Seek_Read        fpos = %10llu    next = %10llu    size = %6d";
+  const wstring close = L" %08x                                                                     TotalAppendTry = %10llu";
 
 
   ///=============================
@@ -93,22 +87,18 @@ public:
   void AppendBuff(const __int64 fpos, const DWORD size)
   {
     TotalAppendTry += size;
-    WriteLine(L"  ++ buff                 fpos = %10llu                           size = %6d    total_try = %10llu",
-      fpos, size, TotalAppendTry);
+    WriteLine(appe, std::this_thread::get_id(), fpos, size, TotalAppendTry);
   }
 
-
   ///=============================
-  ///AppendBuff    Fail to Lock
+  ///FailLock
   ///=============================
 public:
-  void AppendBuff_FailLock(const __int64 fpos, const DWORD size)
+  void FailLock(const __int64 fpos, const DWORD size)
   {
     TotalAppendTry += size;
-    WriteLine(L"  .. fail append lock     fpos = %10llu                           size = %6d    total_try = %10llu",
-      fpos, size, TotalAppendTry);
+    WriteLine(fail, std::this_thread::get_id(), fpos, size, TotalAppendTry);
   }
-
 
   ///=============================
   ///ReleaseBuff
@@ -116,10 +106,8 @@ public:
 public:
   void ReleaseBuff(const __int64 fpos, const DWORD size)
   {
-    WriteLine(L"  -- buff                 fpos = %10llu                           size = %6d",
-      fpos, size);
+    WriteLine(rele, std::this_thread::get_id(), fpos, size);
   }
-
 
   ///=============================
   ///GetData_fromBuff
@@ -127,10 +115,8 @@ public:
 public:
   void GetData_fromBuff(const __int64 fpos, const DWORD size)
   {
-    WriteLine(L"          ( )from Buff      fpos = %10llu                         size = %6d ",
-      fpos, size);
+    WriteLine(fromBuff, std::this_thread::get_id(), fpos, size);
   }
-
 
   ///=============================
   ///GetData_fromFile
@@ -138,23 +124,18 @@ public:
 public:
   void GetData_fromFile(const __int64 fpos, const DWORD size)
   {
-    WriteLine(L"           $ from file      fpos = %10llu                         size = %6d",
-      fpos, size);
+    WriteLine(fromFile, std::this_thread::get_id(), fpos, size);
   }
-
 
   ///=============================
   ///Seek
   ///=============================
 public:
-  void Seek_fpos_Read(const __int64 fpos_read, const DWORD size)
+  void Seek(const __int64 fpos_read, const DWORD size)
   {
     __int64 before = fpos_read - size;
-    WriteLine(L"             Seek_Read      fpos = %10llu    next = %10llu    size = %6d",
-      before, fpos_read, size);
+    WriteLine(seek, std::this_thread::get_id(), before, fpos_read, size);
   }
-
-
 
 };
 

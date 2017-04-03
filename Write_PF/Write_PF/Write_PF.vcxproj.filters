@@ -81,11 +81,14 @@
     <ClInclude Include="PF\FileReader\FileReader_Log.h">
       <Filter>ヘッダー ファイル\PF\FileReader</Filter>
     </ClInclude>
-    <ClInclude Include="PF\FileReader\StreamBuff.h">
-      <Filter>ヘッダー ファイル\PF\FileReader</Filter>
-    </ClInclude>
     <ClInclude Include="PF\Pipe\PipeWriter.h">
       <Filter>ヘッダー ファイル\PF\Pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="PF\FileReader\FileBlockBuff.h">
+      <Filter>ヘッダー ファイル\PF\FileReader</Filter>
+    </ClInclude>
+    <ClInclude Include="PF\Setting.h">
+      <Filter>ヘッダー ファイル\PF</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

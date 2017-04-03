@@ -4,7 +4,7 @@
 
 
 ///=============================
-///　Named Pipe         non-blocking I/O
+///　Named Pipe
 ///=============================
 class NamedPipe : public PipeWriter
 {
@@ -20,20 +20,16 @@ public:
     hQuitOrder = hquit;
     hWritePipe = INVALID_HANDLE_VALUE;
   }
-  ~NamedPipe(){}
-
-
 
   ///=============================
   ///　クライアント起動
   ///=============================
 public:
-  void RunClient(wstring command, bool hideClient)
+  void RunClient(wstring command, bool hide)
   {
-    DWORD dwCreationFlags = hideClient
+    DWORD dwCreationFlags = hide
       ? NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW
       : NORMAL_PRIORITY_CLASS | CREATE_NEW_CONSOLE;
-
     STARTUPINFO si = {};
     PROCESS_INFORMATION pi = {};
     si.cb = sizeof(si);
@@ -49,7 +45,6 @@ public:
       NULL,                          //カレントディレクトリの名前
       &si,                           //スタートアップ情報
       &pi);                          //プロセス情報
-
     if (ret) {
       CloseHandle(pi.hThread);
       CloseHandle(pi.hProcess);
@@ -75,49 +70,39 @@ public:
       0,                                            //入力バッファのサイズ
       1000,                                         //規定の接続タイムアウト
       NULL);                                        //セキュリティ記述子
-    if (hWritePipe == INVALID_HANDLE_VALUE) return false;
-
+    if (hWritePipe == INVALID_HANDLE_VALUE)
+      return false;
 
     //接続
     HANDLE hPipeEvent = INVALID_HANDLE_VALUE;
     hPipeEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-    if (hPipeEvent == INVALID_HANDLE_VALUE) return false;
-
+    if (hPipeEvent == INVALID_HANDLE_VALUE)
+      return false;
     OVERLAPPED ovl = {};
     ovl.hEvent = hPipeEvent;
 
-
     bool connect;
-    if (ConnectNamedPipe(hWritePipe, &ovl))
-    {
+    if (ConnectNamedPipe(hWritePipe, &ovl)) {
       // Overlapped ConnectNamedPipe should return zero. 
       connect = false;
     }
-    else
-    {
+    else {
       DWORD lastErr = GetLastError();
-      if (lastErr == ERROR_PIPE_CONNECTED)
-      {
+      if (lastErr == ERROR_PIPE_CONNECTED) {
         // success
         //   client connects before the function is called.
         //   there is a good connection between client and server.
         connect = true;
       }
-      else if (lastErr == ERROR_IO_PENDING)
-      {
+      else if (lastErr == ERROR_IO_PENDING) {
         //待機
-        if (WaitEvent(hPipeEvent, hQuitOrder))
-        {
+        if (WaitEvent(hPipeEvent, hQuitOrder)) {
           DWORD lpTransferred;
           if (GetOverlappedResult(hWritePipe, &ovl, &lpTransferred, FALSE))
-          {
             // success
             connect = true;
-          }
           else
-          {
             connect = false;
-          }
         }
         else//hQuitOrder event is fired
           connect = false;
@@ -125,12 +110,7 @@ public:
       else// If an error occurs during the connect operation... 
         connect = false;
     }
-
-    if (hPipeEvent != INVALID_HANDLE_VALUE)
-    {
-      CloseHandle(hPipeEvent);
-      hPipeEvent = INVALID_HANDLE_VALUE;
-    }
+    CloseHandle(hPipeEvent);
     return connect;
   }
 
@@ -146,35 +126,25 @@ public:
     hPipeEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
     if (hPipeEvent == INVALID_HANDLE_VALUE)
       return FALSE;
-
     OVERLAPPED ovl = {};
     ovl.hEvent = hPipeEvent;
 
     //書
     BOOL success = WriteFile(hWritePipe, data.get(), *size, &written, &ovl);
-    if (success)
-    {
+    if (success) {
       //success
     }
-    else
-    {
+    else {
       //待機
-      if (WaitEvent(hPipeEvent, hQuitOrder))
-      {
+      if (WaitEvent(hPipeEvent, hQuitOrder)) {
         success = GetOverlappedResult(hWritePipe, &ovl, &written, FALSE);
       }
-      else
-      {
+      else {
         //hQuitOrder event is fired
         success = FALSE;
       }
     }
-
-    if (hPipeEvent != INVALID_HANDLE_VALUE)
-    {
-      CloseHandle(hPipeEvent);
-      hPipeEvent = INVALID_HANDLE_VALUE;
-    }
+    CloseHandle(hPipeEvent);
     return success;
   }
 
@@ -186,11 +156,7 @@ public:
 public:
   void Close()
   {
-    if (hWritePipe != INVALID_HANDLE_VALUE)
-    {
-      FlushFileBuffers(hWritePipe);
-      Sleep(300);
-
+    if (hWritePipe != INVALID_HANDLE_VALUE) {
       DisconnectNamedPipe(hWritePipe);
       CloseHandle(hWritePipe);
       hWritePipe = INVALID_HANDLE_VALUE;
@@ -211,17 +177,17 @@ private:
   {
     HANDLE hWaits[2] = { hQuitEvent, hEvent };  //hQuitEventが優先
 
-    //WaitForMultipleObjects
-    //  複数のオブジェクトがシグナル状態になった場合は、最小のインデックス番号が返ります。
-    //  hEvent               -->  ret = 1;
-    //  hQuitEvent           -->  ret = 0;
-    //  hQuitEvent & hEvent  -->  ret = 0;
+                                                //WaitForMultipleObjects
+                                                //  複数のオブジェクトがシグナル状態になった場合は、最小のインデックス番号が返ります。
+                                                //  hEvent               -->  ret = 1;
+                                                //  hQuitEvent           -->  ret = 0;
+                                                //  hQuitEvent & hEvent  -->  ret = 0;
     DWORD ret = WaitForMultipleObjects(2, hWaits, FALSE, INFINITE);
     return ret == WAIT_OBJECT_0 + 1;
   }
 
 
-  
+
 };
 
 

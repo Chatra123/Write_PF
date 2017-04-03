@@ -162,14 +162,15 @@
   <ItemGroup>
     <ClInclude Include="..\..\Common\StringUtil.h" />
     <ClInclude Include="..\..\Common\Util.h" />
+    <ClInclude Include="PF\FileReader\FileBlockBuff.h" />
     <ClInclude Include="PF\FileReader\FileReader.h" />
     <ClInclude Include="PF\FileReader\FileReader_Log.h" />
-    <ClInclude Include="PF\FileReader\StreamBuff.h" />
     <ClInclude Include="PF\PF_Util.h" />
     <ClInclude Include="PF\PipeServer.h" />
     <ClInclude Include="PF\Pipe\AnonPipe.h" />
     <ClInclude Include="PF\Pipe\NamedPipe.h" />
     <ClInclude Include="PF\Pipe\PipeWriter.h" />
+    <ClInclude Include="PF\Setting.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SettingDlg.h" />
     <ClInclude Include="stdafx.h" />

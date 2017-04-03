@@ -4,7 +4,7 @@
 
 
 ///=============================
-///　Anonymous Pipe     blocking I/O
+///　Anonymous Pipe
 ///=============================
 class AnonPipe : public PipeWriter
 {
@@ -16,14 +16,13 @@ public:
   {
     hWritePipe = INVALID_HANDLE_VALUE;
   }
-  ~AnonPipe() {}
 
 
-///=============================
-///　クライアント起動、パイプ接続
-///=============================
+  ///=============================
+  ///　クライアント起動、パイプ接続
+  ///=============================
 public:
-  void RunClient(wstring command, bool hideClient)
+  void RunClient(wstring command, bool hide)
   {
     //パイプ作成
     HANDLE hReadPipe;
@@ -31,7 +30,6 @@ public:
       HANDLE hTempPipe;
       if (CreatePipe(&hTempPipe, &hWritePipe, NULL, 1024 * 128) == FALSE)
         return;
-
       BOOL ret = DuplicateHandle(
         GetCurrentProcess(),
         hTempPipe,
@@ -42,7 +40,6 @@ public:
         DUPLICATE_SAME_ACCESS);
       if (ret == FALSE)
         return;
-
       CloseHandle(hTempPipe);
     }
 
@@ -50,36 +47,39 @@ public:
     SECURITY_ATTRIBUTES sa = {};
     STARTUPINFO si = {};
     PROCESS_INFORMATION pi = {};
-    {
-      sa.nLength = sizeof(sa);
-      sa.lpSecurityDescriptor = NULL;
-      sa.bInheritHandle = TRUE;
-      si.cb = sizeof(si);
-      si.dwFlags = STARTF_USESTDHANDLES;
-      si.hStdInput = hReadPipe;
-      //標準(エラー)出力はnulデバイスに捨てる
-      si.hStdOutput = CreateFile(L"nul", GENERIC_WRITE, 0, &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-      si.hStdError = CreateFile(L"nul", GENERIC_WRITE, 0, &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    }
+    sa.nLength = sizeof(sa);
+    sa.lpSecurityDescriptor = NULL;
+    sa.bInheritHandle = TRUE;
+    si.cb = sizeof(si);
+    si.dwFlags = STARTF_USESTDHANDLES;
+    si.hStdInput = hReadPipe;
+    //標準(エラー)出力はnulデバイスに捨てる
+    si.hStdOutput = CreateFile(L"nul", GENERIC_WRITE, 0, &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    si.hStdError = CreateFile(L"nul", GENERIC_WRITE, 0, &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
-    BOOL ret = CreateProcess(NULL, (LPWSTR)command.c_str(), NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
-
-    //close
+    BOOL ret = CreateProcess(
+      NULL,
+      (LPWSTR)command.c_str(),
+      NULL,
+      NULL,
+      TRUE,
+      CREATE_NO_WINDOW,
+      NULL,
+      NULL,
+      &si,
+      &pi);
     CloseHandle(hReadPipe);
-    if (si.hStdOutput != INVALID_HANDLE_VALUE)
-      CloseHandle(si.hStdOutput);
-    if (si.hStdError != INVALID_HANDLE_VALUE)
-      CloseHandle(si.hStdError);
+    CloseHandle(si.hStdOutput);
+    CloseHandle(si.hStdError);
     if (ret) {
       CloseHandle(pi.hThread);
       CloseHandle(pi.hProcess);
     }
   }
 
-
-///=============================
-///　パイプ接続
-///=============================
+  ///=============================
+  ///　パイプ接続
+  ///=============================
 public:
   bool Connect()
   {
@@ -88,39 +88,31 @@ public:
   }
 
 
-///=============================
-///　パイプ書き込み
-///=============================
+  ///=============================
+  ///　パイプ書き込み
+  ///=============================
 public:
   BOOL Write(shared_ptr<BYTE> &data, shared_ptr<DWORD> &size, DWORD& written)
   {
     if (hWritePipe == INVALID_HANDLE_VALUE)
       return FALSE;
-
     BOOL success = WriteFile(hWritePipe, data.get(), *size, &written, NULL);
     return success;
   }
 
 
-///=============================
-///　送信終了
-///=============================
+  ///=============================
+  ///　送信終了
+  ///=============================
 public:
   void Close()
   {
-    if (hWritePipe != INVALID_HANDLE_VALUE)
-    {
-      FlushFileBuffers(hWritePipe);
-      Sleep(300);
-
-      CloseHandle(hWritePipe);
-      hWritePipe = INVALID_HANDLE_VALUE;
-    }
+    CloseHandle(hWritePipe);
   }
 
 
 
- };
+};
 
 
 
