@@ -129,7 +129,7 @@ private:
   void Read()
   {
     Write_Buff = iniFile->GetInt(L"Set", L"Size", 770048);
-    Write_Buff = iniFile->GetBool(L"Pipe", L"NamedPipe", true);
+    Mode_NamedPipe = iniFile->GetBool(L"Pipe", L"NamedPipe", true);
     Pipe_Buff_MiB = iniFile->GetDouble(L"Pipe", L"Buff_MiB", 3);
     wstring section;
     section = L"Client_0";
