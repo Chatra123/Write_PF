@@ -130,7 +130,7 @@ private:
   {
     Write_Buff = iniFile->GetInt(L"Set", L"Size", 770048);
     Mode_NamedPipe = iniFile->GetBool(L"Pipe", L"NamedPipe", true);
-    Pipe_Buff_MiB = iniFile->GetDouble(L"Pipe", L"Buff_MiB", 3);
+    Pipe_Buff_MiB = iniFile->GetDouble(L"Pipe", L"Buff_MiB", 3.0);
     wstring section;
     section = L"Client_0";
     Client[0].No = 0;
@@ -153,17 +153,11 @@ private:
 private:
   void Write()
   {
-    //const wstring pfA_Path = L".\\Write\\Write_PF\\pfAdapter\\pfAdapter.exe";
-    //const wstring pfA_Args1 = L"-npipe $PipeName$  -file \"$FilePath$\"";
-    //const wstring pfA_Args2 = L"-npipe $PipeName$  -file \"$FilePath$\"  -xml pfAdapter2.xml ";
-    //const wstring p2f_Path = L".\\Write\\Write_PF\\Pipe2File.exe";
-    //const wstring p2f_Args = L"\"$FilePath$.p2f.ts\" a";//  a ‚ª–³‚¢‚ÆFilePath‚Ìhh‚ªŽ©“®‚Å‚Í‚¸‚³‚ê‚Ä‚µ‚Ü‚¤
-
     const wstring pfA_Path = L".\\Write\\Write_PF\\pfAdapter\\pfAdapter.exe";
     const wstring pfA_Args = L"-npipe $PipeName$  -file \"$FilePath$\"";
     iniFile->WriteString(L"SET", L"Size", L"770048");
     iniFile->WriteString(L"Pipe", L"NamedPipe", L"1");
-    iniFile->WriteString(L"Pipe", L"Buff_MiB", L"3");
+    iniFile->WriteString(L"Pipe", L"Buff_MiB", L"3.0");
     wstring section;
     section = L"Client_0";
     iniFile->WriteString(section, L"Enable", L"1");
