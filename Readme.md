@@ -27,9 +27,10 @@ Write_Default.dllと同じ項目
 
 
     [Pipe]
-    Enable=1
-    
-パイプ接続を行うか？
+    NamedPipe=1
+	
+0: 匿名パイプ redirect stdin  
+1: 名前つきパイプ  
 
 
     BuffSize_MiB=3.0
@@ -39,7 +40,7 @@ Write_Default.dllと同じ項目
 ファイル書込み用バッファの３倍を推奨。   
 
 
-    [Client]
+    [Client_0]
     Enable=1
     
 実行ファイルを起動するか？
