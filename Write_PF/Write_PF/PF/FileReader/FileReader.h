@@ -1,7 +1,7 @@
 /*
 仮想のＴＳファイルから読込
 （ ＴＳ書込用データと実ファイル ）
-（ FileBlockBuff     ifstream   ）
+（ FileBlockBuff     *fp   ）
 
 */
 #pragma once
@@ -36,8 +36,9 @@ public:
     buff = make_unique<FileBlockBuff>(buffsize, log);
     fp = _wfsopen(filepath.c_str(), L"rbN", _SH_DENYNO);
     // N :子プロセスに継承しない
-    //"N"がないとAnonPipeでclientを開くときにfpも渡してしまう。
-    //大きな問題になることはないが、pfAdapterが終了するまでfilepathの移動ができなくなる。
+    //"N"がないとAnonPipeでclient_1を開くときにfpも渡してしまう。
+    //基本的にclient_1を実行することはなく、client_1のpfAdapterが終了するまでfilepathの移動ができなくなるだけ。
+    //なくても大きな問題にはなることはないがつけておく。
     //NamedPipeなら"N"はなくても問題ない。
   }
   void Close()
