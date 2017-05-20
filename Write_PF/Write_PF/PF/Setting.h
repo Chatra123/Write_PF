@@ -103,8 +103,11 @@ public:
   };
 
 
+
 private:
-  unique_ptr<IniFile> iniFile;
+  const wstring pfA_Path = L".\\Write\\Write_PF\\pfAdapter\\pfAdapter.exe";
+  const wstring pfA_Args = L"-npipe $PipeName$  -file \"$FilePath$\"";
+  unique_ptr<IniFile> ini;
 
 public:
   wstring TsPath;
@@ -116,8 +119,8 @@ public:
 public:
   SettingA(wstring dllpath)
   {
-    iniFile = make_unique<IniFile>(dllpath + L".ini");
-    if (iniFile->IsExist() == false)
+    ini = make_unique<IniFile>(dllpath + L".ini");
+    if (ini->IsExist() == false)
       Write();
     Read();
   }
@@ -128,22 +131,22 @@ public:
 private:
   void Read()
   {
-    Write_Buff = iniFile->GetInt(L"Set", L"Size", 770048);
-    Mode_NamedPipe = iniFile->GetBool(L"Pipe", L"NamedPipe", true);
-    Pipe_Buff_MiB = iniFile->GetDouble(L"Pipe", L"Buff_MiB", 3.0);
+    Write_Buff = ini->GetInt(L"Set", L"Size", 770048);
+    Mode_NamedPipe = ini->GetBool(L"Pipe", L"NamedPipe", true);
+    Pipe_Buff_MiB = ini->GetDouble(L"Pipe", L"Buff_MiB", 3.0);
     wstring section;
     section = L"Client_0";
     Client[0].No = 0;
-    Client[0].Enable = iniFile->GetBool(section, L"Enable", false);
-    Client[0].Path = iniFile->GetString(section, L"Path", L"");
-    Client[0].Args = iniFile->GetString(section, L"Args", L"");
-    Client[0].Hide = iniFile->GetBool(section, L"Hide", false);
+    Client[0].Enable = ini->GetBool(section, L"Enable", true);
+    Client[0].Path = ini->GetString(section, L"Path", pfA_Path);
+    Client[0].Args = ini->GetString(section, L"Args", pfA_Args);
+    Client[0].Hide = ini->GetBool(section, L"Hide", true);
     section = L"Client_1";
     Client[1].No = 1;
-    Client[1].Enable = iniFile->GetBool(section, L"Enable", false);
-    Client[1].Path = iniFile->GetString(section, L"Path", L"");
-    Client[1].Args = iniFile->GetString(section, L"Args", L"");
-    Client[1].Hide = iniFile->GetBool(section, L"Hide", false);
+    Client[1].Enable = ini->GetBool(section, L"Enable", false);
+    Client[1].Path = ini->GetString(section, L"Path", L"");
+    Client[1].Args = ini->GetString(section, L"Args", L"");
+    Client[1].Hide = ini->GetBool(section, L"Hide", false);
   }
 
 
@@ -153,17 +156,15 @@ private:
 private:
   void Write()
   {
-    const wstring pfA_Path = L".\\Write\\Write_PF\\pfAdapter\\pfAdapter.exe";
-    const wstring pfA_Args = L"-npipe $PipeName$  -file \"$FilePath$\"";
-    iniFile->WriteString(L"SET", L"Size", L"770048");
-    iniFile->WriteString(L"Pipe", L"NamedPipe", L"1");
-    iniFile->WriteString(L"Pipe", L"Buff_MiB", L"3.0");
+    ini->WriteString(L"SET", L"Size", L"770048");
+    ini->WriteString(L"Pipe", L"NamedPipe", L"1");
+    ini->WriteString(L"Pipe", L"Buff_MiB", L"3.0");
     wstring section;
     section = L"Client_0";
-    iniFile->WriteString(section, L"Enable", L"1");
-    iniFile->WriteString(section, L"Path", pfA_Path);
-    iniFile->WriteString(section, L"Args", pfA_Args);
-    iniFile->WriteString(section, L"Hide", L"1");
+    ini->WriteString(section, L"Enable", L"1");
+    ini->WriteString(section, L"Path", pfA_Path);
+    ini->WriteString(section, L"Args", pfA_Args);
+    ini->WriteString(section, L"Hide", L"1");
   }
 
 
