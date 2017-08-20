@@ -9,6 +9,7 @@
 class NamedPipe : public PipeWriter
 {
 private:
+  bool hasClient;
   wstring PipeName;
   HANDLE hQuitOrder;
   HANDLE hWritePipe;
@@ -16,6 +17,7 @@ private:
 public:
   NamedPipe(wstring pipename, HANDLE hquit)
   {
+    hasClient = false;
     PipeName = pipename;
     hQuitOrder = hquit;
     hWritePipe = INVALID_HANDLE_VALUE;
@@ -49,6 +51,7 @@ public:
       CloseHandle(pi.hThread);
       CloseHandle(pi.hProcess);
     }
+    hasClient = ret ? true : false;
   }
 
 
@@ -59,6 +62,9 @@ public:
 public:
   bool Connect()
   {
+    if (hasClient == false)
+      return false;
+
     //作成
     wstring fullname = L"\\\\.\\pipe\\" + this->PipeName;
     hWritePipe = CreateNamedPipe(
@@ -176,12 +182,11 @@ private:
   bool WaitEvent(HANDLE hEvent, HANDLE hQuitEvent)
   {
     HANDLE hWaits[2] = { hQuitEvent, hEvent };  //hQuitEventが優先
-
-                                                //WaitForMultipleObjects
-                                                //  複数のオブジェクトがシグナル状態になった場合は、最小のインデックス番号が返ります。
-                                                //  hEvent               -->  ret = 1;
-                                                //  hQuitEvent           -->  ret = 0;
-                                                //  hQuitEvent & hEvent  -->  ret = 0;
+    //WaitForMultipleObjects
+    //  複数のオブジェクトがシグナル状態になった場合は、最小のインデックス番号が返ります。
+    //  hEvent               -->  ret = 1;
+    //  hQuitEvent           -->  ret = 0;
+    //  hQuitEvent & hEvent  -->  ret = 0;
     DWORD ret = WaitForMultipleObjects(2, hWaits, FALSE, INFINITE);
     return ret == WAIT_OBJECT_0 + 1;
   }

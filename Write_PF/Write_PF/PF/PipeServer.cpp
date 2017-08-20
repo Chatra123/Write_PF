@@ -41,13 +41,14 @@ PipeServer::PipeServer(
 {
   /* test */
   //setting->Mode_NamedPipe = false;  //  true  false
-  //setting->Mode_NamedPipe = true;
 
   this->setting = setting;
   this->setting_client = client;
-  if (client->Enable == false) return;
+  bool exist = _waccess_s(client->Path.c_str(), 0) == 0;
+  if (client->Enable == false || exist == false)
+    return;
 
-  //create pipe
+  //writer
   wstring pipeName = L"WritePF_" + PF_Util::GetUUID();
   if (setting->Mode_NamedPipe)
   {
@@ -58,8 +59,6 @@ PipeServer::PipeServer(
   }
   else
     writer = make_unique<AnonPipe>();
-
-  //writer
   wstring args = ReplaceMacro(client->Args, pipeName, setting->TsPath);
   wstring command = L"\"" + client->Path + L"\"  " + args;
   writer->RunClient(command, client->Hide);
@@ -141,12 +140,17 @@ void PipeServer::SendMain_Invoker(void *param)
 {
   PipeServer *pThis = static_cast<PipeServer *>(param);
   pThis->SendMain();
+  if (pThis->reader)
+    pThis->reader->Close();
+  if (pThis->writer)
+    pThis->writer->Close();
 }
 void PipeServer::SendMain()
 {
   if (writer == nullptr || reader == nullptr)
     return;
-
+  if (setting->Pipe_Enable == false)
+    return;
   bool connect = writer->Connect();
   if (connect == false)
     return;// hQuitOrder or error
@@ -181,8 +185,6 @@ void PipeServer::SendMain()
       Sleep(50);
     }
   }//end while
-  reader->Close();
-  writer->Close();
 }
 
 

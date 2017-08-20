@@ -9,7 +9,7 @@ class FileReader_Log
 #ifdef NDEBUG  // Release
   const bool Enable = false;           // fix false
 #else
-  const bool Enable = false;           // true  or  false
+  const bool Enable = false;           // true   false
 #endif
 
   mutex sync;
